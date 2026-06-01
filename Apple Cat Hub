@@ -1,0 +1,854 @@
+-- Apple Cat Hub - Script para Blox Fruits
+-- Versão Final com Teleporte e Dragon Update
+
+local AppleCatHub = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local TitleBar = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local CloseButton = Instance.new("TextButton")
+local MenuButton = Instance.new("ImageButton")
+local ContentFrame = Instance.new("Frame")
+
+-- Services
+local Players = game:GetService("Players")
+local VirtualUser = game:GetService("VirtualUser")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
+
+-- Variables
+local isMenuOpen = true
+local selectedSea = "First Sea"
+local selectedBoss = "Diamond"
+local selectedBoat = "Boat"
+local selectedSeaEvent = "Sea Beast"
+local selectedSeaLevel = "1"
+local selectedRaid = "Flame"
+local selectedAwakenFruit = "Flame"
+local selectedIsland = "Start Island"
+local selectedDracoVersion = "V1"
+
+-- Ilhas por mar
+local islands = {
+    ["First Sea"] = {
+        "Start Island", "Pirate Village", "Desert", "Frozen Village",
+        "Marine Fortress", "Skylands", "Prison", "Colosseum",
+        "Magma Village", "Underwater City", "Fountain City"
+    },
+    ["Second Sea"] = {
+        "Kingdom of Rose", "Green Zone", "Graveyard", "Snow Mountain",
+        "Hot and Cold", "Cursed Ship", "Ice Castle", "Forgotten Island",
+        "Dark Arena", "Usoapp Island", "Cake Land"
+    },
+    ["Third Sea"] = {
+        "Port Town", "Hydra Island", "Great Tree", "Floating Turtle",
+        "Haunted Castle", "Sea of Treats", "Tiki Outpost", "Castle on the Sea",
+        "Mirage Island", "Phantom Island"
+    }
+}
+
+-- Listas
+local weaponTypes = {"Melee", "Sword", "Blox Fruit", "Gun"}
+local seas = {"First Sea", "Second Sea", "Third Sea"}
+local seaLevels = {"1", "2", "3", "4", "5", "6", "Infinito"}
+local boats = {"Boat", "Swan Boat", "Enforcer", "Brigade", "Grand Brigade", "Magma Boat", "Beast Boat", "Sleigh", "Miracle"}
+local seaEvents = {"Sea Beast", "Terror Shark", "Piranha", "Tubarão", "Leviathan"}
+local raidFruits = {"Flame", "Ice", "Quake", "Light", "Dark", "String", "Rumble", "Magma", "Buddha", "Sand", "Phoenix", "Dough", "Dragon"}
+local awakenFruits = {"Flame", "Ice", "Quake", "Light", "Dark", "String", "Rumble", "Magma", "Buddha", "Phoenix", "Dough"}
+local dracoVersions = {"V1", "V2", "V3", "V4"}
+local bosses = {
+    "Diamond", "Jeremy", "Fajita", "Don Swan", "Smoke Admiral",
+    "Awakened Ice Admiral", "Tide Keeper", "Cursed Captain",
+    "Darkbeard", "Order", "Rip Indra", "Beautiful Pirate",
+    "Cake Queen", "Longma", "Soul Reaper", "Stone", "Island Empress"
+}
+local materials = {
+    "Angel Wings", "Demonic Wisp", "Ectoplasm", "Leather", 
+    "Magma Ore", "Radioactive Material", "Vampire Fang", "Bone",
+    "Scrap Metal", "Mystic Droplet", "Dragon Scales", "Fish Tail"
+}
+local legendarySwords = {
+    "Saber", "Rengoku", "Shisui", "Wando", "Soul Cane",
+    "Pole V2", "True Triple Katana", "Cursed Dual Katana",
+    "Dark Blade", "Yama", "Tushita", "Spikey Trident"
+}
+
+-- Ilhas com coordenadas (exemplo, ajustar conforme necessário)
+local islandCoordinates = {
+    ["Start Island"] = Vector3.new(0, 0, 0),
+    ["Pirate Village"] = Vector3.new(-1000, 0, 1000),
+    ["Desert"] = Vector3.new(-2000, 0, 2000),
+    ["Frozen Village"] = Vector3.new(1000, 0, -1000),
+    ["Kingdom of Rose"] = Vector3.new(-5000, 0, 5000),
+    ["Green Zone"] = Vector3.new(-6000, 0, 6000),
+    ["Port Town"] = Vector3.new(-10000, 0, 10000),
+    ["Hydra Island"] = Vector3.new(-11000, 0, 11000),
+}
+
+-- Anti Ban System
+local function antiBanSystem()
+    spawn(function()
+        while true do
+            wait()
+            pcall(function()
+                for _, v in pairs(game:GetDescendants()) do
+                    if v:IsA("Script") and (string.find(v.Name, "Anti") or string.find(v.Name, "Detection") or string.find(v.Name, "Ban")) then
+                        v:Destroy()
+                    end
+                end
+                
+                if LocalPlayer.Idled then
+                    VirtualUser:Button2Down(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+                    wait(1)
+                    VirtualUser:Button2Up(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+                end
+            end)
+            wait(30)
+        end
+    end)
+end
+
+antiBanSystem()
+
+-- GUI Setup
+AppleCatHub.Name = "AppleCatHub"
+AppleCatHub.Parent = PlayerGui
+AppleCatHub.ResetOnSpawn = false
+
+-- Menu Button
+MenuButton.Name = "MenuButton"
+MenuButton.Parent = AppleCatHub
+MenuButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MenuButton.BackgroundTransparency = 0.2
+MenuButton.Position = UDim2.new(0.01, 0, 0.5, 0)
+MenuButton.Size = UDim2.new(0, 55, 0, 55)
+MenuButton.BorderSizePixel = 0
+MenuButton.ZIndex = 2
+
+local iconImage = Instance.new("ImageLabel")
+iconImage.Parent = MenuButton
+iconImage.BackgroundTransparency = 1
+iconImage.Size = UDim2.new(0.85, 0, 0.85, 0)
+iconImage.Position = UDim2.new(0.075, 0, 0.075, 0)
+iconImage.Image = "https://cdn.discordapp.com/attachments/1510797131525390406/1510867017144733719/image.png"
+iconImage.ScaleType = Enum.ScaleType.Fit
+iconImage.ZIndex = 3
+
+-- Main Frame (Quadrado e Transparente)
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = AppleCatHub
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BackgroundTransparency = 0.2
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.05, 0, 0.05, 0)
+MainFrame.Size = UDim2.new(0, 620, 0, 620)
+MainFrame.Visible = true
+MainFrame.ZIndex = 1
+
+-- Borda vermelha
+local border = Instance.new("Frame")
+border.Parent = MainFrame
+border.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+border.BackgroundTransparency = 0.3
+border.Size = UDim2.new(1, 4, 1, 4)
+border.Position = UDim2.new(0, -2, 0, -2)
+border.BorderSizePixel = 0
+border.ZIndex = 0
+
+-- Title Bar
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainFrame
+TitleBar.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+TitleBar.BackgroundTransparency = 0.2
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BorderSizePixel = 0
+
+Title.Name = "Title"
+Title.Parent = TitleBar
+Title.BackgroundTransparency = 1
+Title.Size = UDim2.new(0.8, 0, 1, 0)
+Title.Position = UDim2.new(0.06, 0, 0, 0)
+Title.Text = "🍎 Apple Cat Hub"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBold
+
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = TitleBar
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.BackgroundTransparency = 0.2
+CloseButton.Size = UDim2.new(0, 40, 1, 0)
+CloseButton.Position = UDim2.new(0.93, 0, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 18
+CloseButton.BorderSizePixel = 0
+
+-- Tab Frame
+local TabScrollFrame = Instance.new("ScrollingFrame")
+TabScrollFrame.Parent = MainFrame
+TabScrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TabScrollFrame.BackgroundTransparency = 0.2
+TabScrollFrame.Size = UDim2.new(1, 0, 0, 40)
+TabScrollFrame.Position = UDim2.new(0, 0, 0.065, 0)
+TabScrollFrame.BorderSizePixel = 0
+TabScrollFrame.CanvasSize = UDim2.new(5, 0, 0, 0)
+TabScrollFrame.ScrollBarThickness = 2
+
+local tabButtons = {}
+local tabNames = {
+    "AutoFarm", "Sea Event", "Raid", "Teleporte", "Dragon",
+    "Boss", "Trial", "Swords", "FightStyles", "Misc"
+}
+
+for i, tabName in ipairs(tabNames) do
+    local tabButton = Instance.new("TextButton")
+    tabButton.Name = tabName.."Tab"
+    tabButton.Parent = TabScrollFrame
+    tabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    tabButton.BackgroundTransparency = 0.2
+    tabButton.Size = UDim2.new(0, 110, 1, 0)
+    tabButton.Position = UDim2.new(0, (i-1) * 110, 0, 0)
+    tabButton.Text = tabName
+    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabButton.TextSize = 11
+    tabButton.BorderSizePixel = 0
+    tabButtons[tabName] = tabButton
+end
+
+-- Content Frame
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Parent = MainFrame
+ContentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+ContentFrame.BackgroundTransparency = 0.2
+ContentFrame.Size = UDim2.new(1, 0, 0.83, 0)
+ContentFrame.Position = UDim2.new(0, 0, 0.13, 0)
+ContentFrame.BorderSizePixel = 0
+
+local contentFrames = {}
+for _, tabName in ipairs(tabNames) do
+    local frame = Instance.new("Frame")
+    frame.Name = tabName.."Frame"
+    frame.Parent = ContentFrame
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.Visible = false
+    contentFrames[tabName] = frame
+end
+
+-- ===========================================
+-- TELEPORTE TAB
+-- ===========================================
+local teleportFrame = contentFrames["Teleporte"]
+
+-- Selecionar Mar
+local teleportSeaLabel = Instance.new("TextLabel")
+teleportSeaLabel.Parent = teleportFrame
+teleportSeaLabel.BackgroundTransparency = 1
+teleportSeaLabel.Position = UDim2.new(0.05, 0, 0.02, 0)
+teleportSeaLabel.Size = UDim2.new(0.9, 0, 0, 20)
+teleportSeaLabel.Text = "Selecionar Mar:"
+teleportSeaLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportSeaLabel.TextSize = 14
+
+local teleportSeaDropdown = Instance.new("TextButton")
+teleportSeaDropdown.Parent = teleportFrame
+teleportSeaDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+teleportSeaDropdown.BackgroundTransparency = 0.2
+teleportSeaDropdown.Position = UDim2.new(0.05, 0, 0.05, 0)
+teleportSeaDropdown.Size = UDim2.new(0.9, 0, 0, 30)
+teleportSeaDropdown.Text = "Mar: First Sea"
+teleportSeaDropdown.TextColor3 = Color3.fromRGB(255, 0, 0)
+teleportSeaDropdown.TextSize = 14
+teleportSeaDropdown.BorderSizePixel = 0
+
+local teleportSeaList = Instance.new("Frame")
+teleportSeaList.Parent = teleportFrame
+teleportSeaList.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+teleportSeaList.BackgroundTransparency = 0.2
+teleportSeaList.Position = UDim2.new(0.05, 0, 0.1, 0)
+teleportSeaList.Size = UDim2.new(0.9, 0, 0, 90)
+teleportSeaList.Visible = false
+teleportSeaList.BorderSizePixel = 0
+
+for i, sea in ipairs(seas) do
+    local seaBtn = Instance.new("TextButton")
+    seaBtn.Parent = teleportSeaList
+    seaBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    seaBtn.BackgroundTransparency = 0.2
+    seaBtn.Size = UDim2.new(1, 0, 0.33, 0)
+    seaBtn.Position = UDim2.new(0, 0, (i-1) * 0.33, 0)
+    seaBtn.Text = sea
+    seaBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    seaBtn.TextSize = 12
+    seaBtn.BorderSizePixel = 0
+    
+    seaBtn.MouseButton1Click:Connect(function()
+        selectedSea = sea
+        teleportSeaDropdown.Text = "Mar: " .. sea
+        teleportSeaList.Visible = false
+        islandDropdown.Text = "Ilha: Selecione"
+    end)
+end
+
+teleportSeaDropdown.MouseButton1Click:Connect(function()
+    teleportSeaList.Visible = not teleportSeaList.Visible
+end)
+
+-- Selecionar Ilha
+local islandLabel = Instance.new("TextLabel")
+islandLabel.Parent = teleportFrame
+islandLabel.BackgroundTransparency = 1
+islandLabel.Position = UDim2.new(0.05, 0, 0.26, 0)
+islandLabel.Size = UDim2.new(0.9, 0, 0, 20)
+islandLabel.Text = "Selecionar Ilha:"
+islandLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+islandLabel.TextSize = 14
+
+local islandDropdown = Instance.new("TextButton")
+islandDropdown.Parent = teleportFrame
+islandDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+islandDropdown.BackgroundTransparency = 0.2
+islandDropdown.Position = UDim2.new(0.05, 0, 0.29, 0)
+islandDropdown.Size = UDim2.new(0.7, 0, 0, 30)
+islandDropdown.Text = "Ilha: Selecione"
+islandDropdown.TextColor3 = Color3.fromRGB(255, 0, 0)
+islandDropdown.TextSize = 14
+islandDropdown.BorderSizePixel = 0
+
+local islandList = Instance.new("Frame")
+islandList.Parent = teleportFrame
+islandList.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+islandList.BackgroundTransparency = 0.2
+islandList.Position = UDim2.new(0.05, 0, 0.34, 0)
+islandList.Size = UDim2.new(0.7, 0, 0, 250)
+islandList.Visible = false
+islandList.BorderSizePixel = 0
+
+local islandScroll = Instance.new("ScrollingFrame")
+islandScroll.Parent = islandList
+islandScroll.BackgroundTransparency = 1
+islandScroll.Size = UDim2.new(1, 0, 1, 0)
+islandScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local function updateIslandList()
+    -- Clear existing buttons
+    for _, child in pairs(islandScroll:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    
+    local currentIslands = islands[selectedSea] or {}
+    islandScroll.CanvasSize = UDim2.new(0, 0, 0, #currentIslands * 30)
+    
+    for i, island in ipairs(currentIslands) do
+        local islandBtn = Instance.new("TextButton")
+        islandBtn.Parent = islandScroll
+        islandBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        islandBtn.BackgroundTransparency = 0.2
+        islandBtn.Size = UDim2.new(1, -10, 0, 28)
+        islandBtn.Position = UDim2.new(0, 5, 0, (i-1) * 30)
+        islandBtn.Text = island
+        islandBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        islandBtn.TextSize = 11
+        islandBtn.BorderSizePixel = 0
+        
+        islandBtn.MouseButton1Click:Connect(function()
+            selectedIsland = island
+            islandDropdown.Text = "Ilha: " .. island
+            islandList.Visible = false
+        end)
+    end
+end
+
+islandDropdown.MouseButton1Click:Connect(function()
+    updateIslandList()
+    islandList.Visible = not islandList.Visible
+end)
+
+-- Botão Teleport
+local teleportButton = Instance.new("TextButton")
+teleportButton.Parent = teleportFrame
+teleportButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+teleportButton.BackgroundTransparency = 0.2
+teleportButton.Position = UDim2.new(0.77, 0, 0.29, 0)
+teleportButton.Size = UDim2.new(0.18, 0, 0, 30)
+teleportButton.Text = "TP"
+teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.TextSize = 16
+teleportButton.Font = Enum.Font.GothamBold
+teleportButton.BorderSizePixel = 0
+
+teleportButton.MouseButton1Click:Connect(function()
+    if selectedIsland and selectedIsland ~= "Selecione" then
+        pcall(function()
+            local pos = islandCoordinates[selectedIsland]
+            if pos then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
+            else
+                -- Tentar encontrar a ilha pelo nome
+                for _, v in pairs(Workspace:GetDescendants()) do
+                    if v.Name == selectedIsland or string.find(v.Name, selectedIsland) then
+                        if v:IsA("Part") or v:IsA("Model") then
+                            local targetPos = v:IsA("Model") and v:GetPivot().Position or v.Position
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 10, 0))
+                            break
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-- Auto TP para ilhas específicas
+local autoTPFarmLabel = Instance.new("TextLabel")
+autoTPFarmLabel.Parent = teleportFrame
+autoTPFarmLabel.BackgroundTransparency = 1
+autoTPFarmLabel.Position = UDim2.new(0.05, 0, 0.5, 0)
+autoTPFarmLabel.Size = UDim2.new(0.9, 0, 0, 20)
+autoTPFarmLabel.Text = "Teleportes Rápidos:"
+autoTPFarmLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoTPFarmLabel.TextSize = 14
+
+-- Botões de TP rápido
+local quickTPs = {
+    {"Café", "Cafe"},
+    {"Comerciante", "Shop"},
+    {"Raids", "Raid"},
+    {"Boneco de Treino", "Dummy"},
+    {"Fábrica", "Factory"},
+    {"Templo", "Temple"},
+    {"Castelo", "Castle"}
+}
+
+for i, tp in ipairs(quickTPs) do
+    local tpButton = Instance.new("TextButton")
+    tpButton.Parent = teleportFrame
+    tpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    tpButton.BackgroundTransparency = 0.2
+    tpButton.Position = UDim2.new(0.05 + ((i-1) % 3) * 0.31, 0, 0.53 + math.floor((i-1)/3) * 0.1, 0)
+    tpButton.Size = UDim2.new(0.28, 0, 0, 30)
+    tpButton.Text = tp[1]
+    tpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tpButton.TextSize = 11
+    tpButton.BorderSizePixel = 0
+    
+    tpButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v.Name == tp[2] or string.find(v.Name, tp[2]) then
+                    if v:IsA("Part") or v:IsA("Model") then
+                        local targetPos = v:IsA("Model") and v:GetPivot().Position or v.Position
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 5, 0))
+                        break
+                    end
+                end
+            end
+        end)
+    end)
+end
+
+-- ===========================================
+-- DRAGON UPDATE TAB
+-- ===========================================
+local dragonFrame = contentFrames["Dragon"]
+
+-- Título Dragon
+local dragonTitle = Instance.new("TextLabel")
+dragonTitle.Parent = dragonFrame
+dragonTitle.BackgroundTransparency = 1
+dragonTitle.Position = UDim2.new(0.05, 0, 0.02, 0)
+dragonTitle.Size = UDim2.new(0.9, 0, 0, 25)
+dragonTitle.Text = "🐉 Dragon Update"
+dragonTitle.TextColor3 = Color3.fromRGB(255, 0, 0)
+dragonTitle.TextSize = 18
+dragonTitle.Font = Enum.Font.GothamBold
+
+-- Selecionar Versão Draco
+local dracoVersionLabel = Instance.new("TextLabel")
+dracoVersionLabel.Parent = dragonFrame
+dracoVersionLabel.BackgroundTransparency = 1
+dracoVersionLabel.Position = UDim2.new(0.05, 0, 0.08, 0)
+dracoVersionLabel.Size = UDim2.new(0.9, 0, 0, 20)
+dracoVersionLabel.Text = "Versão do Draco:"
+dracoVersionLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+dracoVersionLabel.TextSize = 14
+
+local dracoVersionDropdown = Instance.new("TextButton")
+dracoVersionDropdown.Parent = dragonFrame
+dracoVersionDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+dracoVersionDropdown.BackgroundTransparency = 0.2
+dracoVersionDropdown.Position = UDim2.new(0.05, 0, 0.11, 0)
+dracoVersionDropdown.Size = UDim2.new(0.9, 0, 0, 30)
+dracoVersionDropdown.Text = "Versão: V1"
+dracoVersionDropdown.TextColor3 = Color3.fromRGB(255, 0, 0)
+dracoVersionDropdown.TextSize = 14
+dracoVersionDropdown.BorderSizePixel = 0
+
+local dracoVersionList = Instance.new("Frame")
+dracoVersionList.Parent = dragonFrame
+dracoVersionList.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+dracoVersionList.BackgroundTransparency = 0.2
+dracoVersionList.Position = UDim2.new(0.05, 0, 0.16, 0)
+dracoVersionList.Size = UDim2.new(0.9, 0, 0, 120)
+dracoVersionList.Visible = false
+dracoVersionList.BorderSizePixel = 0
+
+for i, version in ipairs(dracoVersions) do
+    local versionBtn = Instance.new("TextButton")
+    versionBtn.Parent = dracoVersionList
+    versionBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    versionBtn.BackgroundTransparency = 0.2
+    versionBtn.Size = UDim2.new(1, -10, 0, 28)
+    versionBtn.Position = UDim2.new(0, 5, 0, (i-1) * 30)
+    versionBtn.Text = version
+    versionBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    versionBtn.TextSize = 12
+    versionBtn.BorderSizePixel = 0
+    
+    versionBtn.MouseButton1Click:Connect(function()
+        selectedDracoVersion = version
+        dracoVersionDropdown.Text = "Versão: " .. version
+        dracoVersionList.Visible = false
+    end)
+end
+
+dracoVersionDropdown.MouseButton1Click:Connect(function()
+    dracoVersionList.Visible = not dracoVersionList.Visible
+end)
+
+-- Auto Draco V1-V4
+local autoDracoToggle = Instance.new("TextButton")
+autoDracoToggle.Parent = dragonFrame
+autoDracoToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+autoDracoToggle.BackgroundTransparency = 0.2
+autoDracoToggle.Position = UDim2.new(0.05, 0, 0.38, 0)
+autoDracoToggle.Size = UDim2.new(0.9, 0, 0, 35)
+autoDracoToggle.Text = "Auto Draco " .. selectedDracoVersion .. ": OFF"
+autoDracoToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+autoDracoToggle.TextSize = 14
+autoDracoToggle.BorderSizePixel = 0
+
+autoDracoToggle.MouseButton1Click:Connect(function()
+    local autoDraco = not autoDraco
+    if autoDraco then
+        autoDracoToggle.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        autoDracoToggle.Text = "Auto Draco " .. selectedDracoVersion .. ": ON"
+        autoDracoToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        
+        spawn(function()
+            while autoDraco do
+                wait()
+                pcall(function()
+                    if selectedDracoVersion == "V1" then
+                        -- Auto get Draco V1
+                        local args = {[1] = "Draco", [2] = "V1"}
+                        ReplicatedStorage.Remotes.CommF:InvokeServer(unpack(args))
+                    elseif selectedDracoVersion == "V2" then
+                        -- Auto get Draco V2
+                        local args = {[1] = "Draco", [2] = "V2"}
+                        ReplicatedStorage.Remotes.CommF:InvokeServer(unpack(args))
+                    elseif selectedDracoVersion == "V3" then
+                        -- Auto get Draco V3
+                        local args = {[1] = "Draco", [2] = "V3"}
+                        ReplicatedStorage.Remotes.CommF:InvokeServer(unpack(args))
+                    elseif selectedDracoVersion == "V4" then
+                        -- Auto get Draco V4
+                        local args = {[1] = "Draco", [2] = "V4"}
+                        ReplicatedStorage.Remotes.CommF:InvokeServer(unpack(args))
+                    end
+                end)
+                wait(3)
+            end
+        end)
+    else
+        autoDracoToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        autoDracoToggle.Text = "Auto Draco " .. selectedDracoVersion .. ": OFF"
+        autoDracoToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+-- Auto Dragon Storm
+local autoDragonStormToggle = Instance.new("TextButton")
+autoDragonStormToggle.Parent = dragonFrame
+autoDragonStormToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+autoDragonStormToggle.BackgroundTransparency = 0.2
+autoDragonStormToggle.Position = UDim2.new(0.05, 0, 0.46, 0)
+autoDragonStormToggle.Size = UDim2.new(0.9, 0, 0, 35)
+autoDragonStormToggle.Text = "Auto Dragon Storm: OFF"
+autoDragonStormToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+autoDragonStormToggle.TextSize = 14
+autoDragonStormToggle.BorderSizePixel = 0
+
+autoDragonStormToggle.MouseButton1Click:Connect(function()
+    local autoDragonStorm = not autoDragonStorm
+    if autoDragonStorm then
+        autoDragonStormToggle.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        autoDragonStormToggle.Text = "Auto Dragon Storm: ON"
+        autoDragonStormToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        
+        spawn(function()
+            while autoDragonStorm do
+                wait()
+                pcall(function()
+                    -- Equip Dragon Storm e usar
+                    for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+                        if string.find(tool.Name, "Dragon Storm") or string.find(tool.Name, "Dragonstorm") then
+                            LocalPlayer.Character.Humanoid:EquipTool(tool)
+                            for i = 1, 10 do
+                                tool:Activate()
+                                wait(0.5)
+                            end
+                            break
+                        end
+                    end
+                    
+                    -- Procurar Dragon Storm
+                    for _, v in pairs(Workspace:GetChildren()) do
+                        if v.Name == "Dragon Storm" or string.find(v.Name, "DragonStorm") then
+                            if v:FindFirstChild("Part") then
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = v.Part.CFrame * CFrame.new(0, 5, 0)
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Part, 0)
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Part, 1)
+                            end
+                        end
+                    end
+                end)
+                wait(2)
+            end
+        end)
+    else
+        autoDragonStormToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        autoDragonStormToggle.Text = "Auto Dragon Storm: OFF"
+        autoDragonStormToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+-- Auto Dragon Heart
+local autoDragonHeartToggle = Instance.new("TextButton")
+autoDragonHeartToggle.Parent = dragonFrame
+autoDragonHeartToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+autoDragonHeartToggle.BackgroundTransparency = 0.2
+autoDragonHeartToggle.Position = UDim2.new(0.05, 0, 0.54, 0)
+autoDragonHeartToggle.Size = UDim2.new(0.9, 0, 0, 35)
+autoDragonHeartToggle.Text = "Auto Dragon Heart: OFF"
+autoDragonHeartToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+autoDragonHeartToggle.TextSize = 14
+autoDragonHeartToggle.BorderSizePixel = 0
+
+autoDragonHeartToggle.MouseButton1Click:Connect(function()
+    local autoDragonHeart = not autoDragonHeart
+    if autoDragonHeart then
+        autoDragonHeartToggle.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        autoDragonHeartToggle.Text = "Auto Dragon Heart: ON"
+        autoDragonHeartToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        
+        spawn(function()
+            while autoDragonHeart do
+                wait()
+                pcall(function()
+                    -- Coletar Dragon Heart
+                    for _, v in pairs(Workspace:GetChildren()) do
+                        if v.Name == "Dragon Heart" or string.find(v.Name, "DragonHeart") then
+                            if v:IsA("Tool") then
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v, 0)
+                                wait(0.1)
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v, 1)
+                            end
+                        end
+                    end
+                    
+                    -- Farmar Dragon Heart de bosses
+                    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                        if (enemy.Name == "Dragon" or string.find(enemy.Name, "Dragon")) and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                            repeat
+                                wait()
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                                VirtualUser:Button1Down(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+                                wait(0.1)
+                                VirtualUser:Button1Up(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+                            until enemy.Humanoid.Health <= 0 or not autoDragonHeart
+                        end
+                    end
+                end)
+                wait(1)
+            end
+        end)
+    else
+        autoDragonHeartToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        autoDragonHeartToggle.Text = "Auto Dragon Heart: OFF"
+        autoDragonHeartToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+-- Auto Dragon Materials
+local autoDragonMaterialsToggle = Instance.new("TextButton")
+autoDragonMaterialsToggle.Parent = dragonFrame
+autoDragonMaterialsToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+autoDragonMaterialsToggle.BackgroundTransparency = 0.2
+autoDragonMaterialsToggle.Position = UDim2.new(0.05, 0, 0.62, 0)
+autoDragonMaterialsToggle.Size = UDim2.new(0.9, 0, 0, 35)
+autoDragonMaterialsToggle.Text = "Auto Dragon Materials: OFF"
+autoDragonMaterialsToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+autoDragonMaterialsToggle.TextSize = 14
+autoDragonMaterialsToggle.BorderSizePixel = 0
+
+autoDragonMaterialsToggle.MouseButton1Click:Connect(function()
+    local autoDragonMaterials = not autoDragonMaterials
+    if autoDragonMaterials then
+        autoDragonMaterialsToggle.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        autoDragonMaterialsToggle.Text = "Auto Dragon Materials: ON"
+        autoDragonMaterialsToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        
+        spawn(function()
+            while autoDragonMaterials do
+                wait()
+                pcall(function()
+                    local dragonMaterials = {"Dragon Scales", "Dragon Bone", "Dragon Heart", "Dragon Talon", "Dragon Wing"}
+                    for _, material in pairs(dragonMaterials) do
+                        for _, v in pairs(Workspace:GetChildren()) do
+                            if v:IsA("Tool") and (v.Name == material or string.find(v.Name, material)) then
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v, 0)
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v, 1)
+                                wait(0.1)
+                            end
+                        end
+                    end
+                end)
+                wait(0.5)
+            end
+        end)
+    else
+        autoDragonMaterialsToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        autoDragonMaterialsToggle.Text = "Auto Dragon Materials: OFF"
+        autoDragonMaterialsToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+-- Auto Dragon Raid
+local autoDragonRaidToggle = Instance.new("TextButton")
+autoDragonRaidToggle.Parent = dragonFrame
+autoDragonRaidToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+autoDragonRaidToggle.BackgroundTransparency = 0.2
+autoDragonRaidToggle.Position = UDim2.new(0.05, 0, 0.70, 0)
+autoDragonRaidToggle.Size = UDim2.new(0.9, 0, 0, 35)
+autoDragonRaidToggle.Text = "Auto Dragon Raid: OFF"
+autoDragonRaidToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+autoDragonRaidToggle.TextSize = 14
+autoDragonRaidToggle.BorderSizePixel = 0
+
+autoDragonRaidToggle.MouseButton1Click:Connect(function()
+    local autoDragonRaid = not autoDragonRaid
+    if autoDragonRaid then
+        autoDragonRaidToggle.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+        autoDragonRaidToggle.Text = "Auto Dragon Raid: ON"
+        autoDragonRaidToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        
+        spawn(function()
+            while autoDragonRaid do
+                wait()
+                pcall(function()
+                    -- Iniciar Dragon Raid
+                    local args = {[1] = "StartRaid", [2] = "Dragon"}
+                    ReplicatedStorage.Remotes.CommF:InvokeServer(unpack(args))
+                    
+                    -- Auto completar Dragon Raid
+                    wait(2)
+                    for _, enemy in pairs(Workspace.Enemies:GetChildren()) do
+                        if string.find(enemy.Name, "Dragon") and enemy:FindFirstChild("HumanoidRootPart") and enemy:FindFirstChild("Humanoid") and enemy.Humanoid.Health > 0 then
+                            repeat
+                                wait()
+                                LocalPlayer.Character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                                VirtualUser:Button1Down(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+                                wait(0.1)
+                                VirtualUser:Button1Up(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
+                            until enemy.Humanoid.Health <= 0 or not autoDragonRaid
+                        end
+                    end
+                end)
+                wait(5)
+            end
+        end)
+    else
+        autoDragonRaidToggle.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        autoDragonRaidToggle.Text = "Auto Dragon Raid: OFF"
+        autoDragonRaidToggle.TextColor3 = Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+-- Tab Switching
+local function switchTab(tabName)
+    for name, frame in pairs(contentFrames) do
+        frame.Visible = false
+    end
+    for name, button in pairs(tabButtons) do
+        button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    end
+    if contentFrames[tabName] then
+        contentFrames[tabName].Visible = true
+    end
+    if tabButtons[tabName] then
+        tabButtons[tabName].BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+    end
+end
+
+for tabName, button in pairs(tabButtons) do
+    button.MouseButton1Click:Connect(function()
+        switchTab(tabName)
+    end)
+end
+
+switchTab("Dragon")
+
+-- Menu Toggle
+MenuButton.MouseButton1Click:Connect(function()
+    isMenuOpen = not isMenuOpen
+    MainFrame.Visible = isMenuOpen
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    isMenuOpen = false
+end)
+
+-- Draggable GUI
+local gui = MainFrame
+loical dragging, dragInput, dragStart, startPos
+
+local function update(input)
+    local delta = input.Position - dragStart
+    gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = gui.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
